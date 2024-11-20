@@ -1,18 +1,28 @@
-from __future__ import absolute_import, division, print_function, unicode_literals
-import tensorflow as tf
-tf.compat.v1.enable_eager_execution() 
-
 import numpy as np
 import os
 import time
-from bs4 import BeautifulSoup
 import requests
 import json
 import pandas as pd
 import argparse
 import shutil
+from tqdm import tqdm
+
+# For Fip35
+
+x=np.array([])
+for i in range(56):
+    single_file = np.loadtxt(f'data/Fip35/micro1000/traj_{i}',dtype=int)
+    x = np.append(x, single_file)
+num = int(0.8 * len(x))    
+train = x[:num]
+valid = x[num:]
+np.savetxt('data/Fip35/micro1000/train',train,fmt='%i')
+np.savetxt('data/Fip35/micro1000/test',valid,fmt='%i')
 
 
+# For Macro
+from bs4 import BeautifulSoup
 x=np.array([])
 for i in range(100):
     if i <10:

@@ -1,5 +1,7 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 from ast import arg
+import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 import tensorflow as tf
 tf.compat.v1.enable_eager_execution() 
 
@@ -9,10 +11,9 @@ import json
 import pandas as pd
 import argparse
 import shutil
-import sys
-sys.path.append('/home/wzengad/projects/MD_code/LSTM')
+
 from utils import *
-from models import *
+from train.models import *
 
 np.random.seed(7)
 tf.random.set_seed(7)
@@ -20,7 +21,7 @@ tf.random.set_seed(7)
 parser = argparse.ArgumentParser(description='LSTM Task')
 parser.add_argument('--task', type=str, default='trans_gpt')
 parser.add_argument('--batch_size', type=int, default=64)
-parser.add_argument('--data_type', type=str, default='phi',choices=['RMSD', 'MacroAssignment','phi','psi'])
+parser.add_argument('--data_type', type=str, default='Fip35_micro',choices=['RMSD', 'MacroAssignment','phi','psi','Fip35'])
 parser.add_argument('--interval', type=int, default=1)
 parser.add_argument('--seq_length', type=int, default=100)
 parser.add_argument('--learning_rate', type=float, default=0.0005)
@@ -29,8 +30,6 @@ parser.add_argument('--gpu_id', type=str, default='2')
 parser.add_argument('--EPOCHS', type=int, default=301)
 parser.add_argument('--save_epoch', type=int, default=10)
 
-parser.add_argument('--preprocess_type', type=str, default='count', choices=['count', 'ordered_count', 'dense'])
-parser.add_argument('--include_transition', default=False, action='store_true')
 parser.add_argument('--include_pos', default=False, action='store_true')
 parser.add_argument('--batch_type', type=str, default='window', choices=['window', 'sparse'])
 parser.add_argument('--window_shift', type=int, default=50)
@@ -50,7 +49,6 @@ lr = args.learning_rate
 EPOCHS = args.EPOCHS
 save_epoch = args.save_epoch
 preprocess_type = args.preprocess_type
-include_transition = args.include_transition
 decay_lr = args.decay_lr
 embedding_dim = args.embedding_dim 
 include_pos = args.include_pos
@@ -70,18 +68,16 @@ assert len(physical_devices) > 0, "Not enough GPU hardware devices available"
 config = tf.config.experimental.set_memory_growth(physical_devices[0], True)
 
 
-root_dir = '/home/wzengad/projects/MD_code/'
-checkpoint_dir = root_dir + f'LSTM/checkpoint/{data_type}/{task}/Label{label_smoothing}_{batch_type}{window_shift}_interval{interval}_lr{lr}_emb_dim{embedding_dim}_l{seq_length}_block{trans_block}'
-log_dir = root_dir + f'LSTM/logs/{data_type}/{task}/Label{label_smoothing}_{batch_type}{window_shift}_interval{interval}_lr{lr}_emb_dim{embedding_dim}_l{seq_length}_block{trans_block}'
+
+checkpoint_dir = f'/checkpoint/{data_type}/{task}/Label{label_smoothing}_{batch_type}{window_shift}_interval{interval}_lr{lr}_emb_dim{embedding_dim}_l{seq_length}_block{trans_block}'
+log_dir = f'/logs/{data_type}/{task}/Label{label_smoothing}_{batch_type}{window_shift}_interval{interval}_lr{lr}_emb_dim{embedding_dim}_l{seq_length}_block{trans_block}'
 if include_pos:
     checkpoint_dir += '_add_pos'
     log_dir += '_add_pos'
 if not ss_infer:
     checkpoint_dir += '_scheduled'
     log_dir += '_scheduled'
-if pretrained_emb:
-    checkpoint_dir += '_transE_emb'
-    log_dir += '_transE_emb'
+
 if decay_lr:
     checkpoint_dir += '_decay_lr'
     log_dir += '_decay_lr'
@@ -93,16 +89,12 @@ if gradient_clip:
 shutil.rmtree(log_dir,ignore_errors=True)
 summary_writer = tf.summary.create_file_writer(log_dir)
 
-datapath = root_dir + f'data/{data_type}/'
+datapath = f'data/{data_type}/'
 train0 = np.loadtxt(datapath+'train',dtype=int).reshape(-1)
 train = train0.reshape(-1, interval).T.flatten()
 valid0 = np.loadtxt(datapath+'test',dtype=int).reshape(-1)
 valid = valid0.reshape(-1, interval).T.flatten()
-if pretrained_emb:
-    emb = np.load('/home/wzengad/projects/OpenKE/checkpoint/entity2vec.npy')
-    emb = tf.convert_to_tensor(emb, dtype=tf.float32)
-else:
-    emb = None
+emb = None
 
 
 train_batch1 = data_as_input(train, BATCH_SIZE, seq_length, shift = window_shift, shuffle=True, type=batch_type)

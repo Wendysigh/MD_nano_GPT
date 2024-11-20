@@ -1,4 +1,4 @@
-# python -u /home/wzengad/projects/MD_code/LSTM/train_trans.py --gpu_id=5 --batch_type=sparse --interval=1 --trans_block=2&
+# python -u train/train_trans.py --gpu_id=5 --batch_type=sparse --interval=1 --trans_block=2&
 # python -u /home/wzengad/projects/MD_code/LSTM/train_trans.py --gpu_id=5 --batch_type=sparse --data_type='psi' --interval=1 --trans_block=2&
 # wait
 
