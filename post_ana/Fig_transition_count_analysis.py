@@ -8,7 +8,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import sys
 sys.path.append('/home/wzengad/projects/MD_code/LSTM')
-from utils import *
+from train.utils import *
 from models import *
 from tqdm import tqdm, trange
 import argparse

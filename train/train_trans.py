@@ -1,7 +1,7 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 from ast import arg
 import os
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '0'
 import tensorflow as tf
 tf.compat.v1.enable_eager_execution() 
 
@@ -13,7 +13,7 @@ import argparse
 import shutil
 
 from utils import *
-from train.models import *
+from models import *
 
 np.random.seed(7)
 tf.random.set_seed(7)
@@ -21,7 +21,7 @@ tf.random.set_seed(7)
 parser = argparse.ArgumentParser(description='LSTM Task')
 parser.add_argument('--task', type=str, default='trans_gpt')
 parser.add_argument('--batch_size', type=int, default=64)
-parser.add_argument('--data_type', type=str, default='Fip35_micro',choices=['RMSD', 'MacroAssignment','phi','psi','Fip35'])
+parser.add_argument('--data_type', type=str, default='Fip35_micro',choices=['RMSD', 'MacroAssignment','phi','psi','Fip35_micro'])
 parser.add_argument('--interval', type=int, default=1)
 parser.add_argument('--seq_length', type=int, default=100)
 parser.add_argument('--learning_rate', type=float, default=0.0005)
@@ -48,7 +48,6 @@ BATCH_SIZE = args.batch_size
 lr = args.learning_rate
 EPOCHS = args.EPOCHS
 save_epoch = args.save_epoch
-preprocess_type = args.preprocess_type
 decay_lr = args.decay_lr
 embedding_dim = args.embedding_dim 
 include_pos = args.include_pos
@@ -69,8 +68,8 @@ config = tf.config.experimental.set_memory_growth(physical_devices[0], True)
 
 
 
-checkpoint_dir = f'/checkpoint/{data_type}/{task}/Label{label_smoothing}_{batch_type}{window_shift}_interval{interval}_lr{lr}_emb_dim{embedding_dim}_l{seq_length}_block{trans_block}'
-log_dir = f'/logs/{data_type}/{task}/Label{label_smoothing}_{batch_type}{window_shift}_interval{interval}_lr{lr}_emb_dim{embedding_dim}_l{seq_length}_block{trans_block}'
+checkpoint_dir = f'checkpoint/{data_type}/{task}/Label{label_smoothing}_{batch_type}{window_shift}_interval{interval}_lr{lr}_emb_dim{embedding_dim}_l{seq_length}_block{trans_block}'
+log_dir = f'logs/{data_type}/{task}/Label{label_smoothing}_{batch_type}{window_shift}_interval{interval}_lr{lr}_emb_dim{embedding_dim}_l{seq_length}_block{trans_block}'
 if include_pos:
     checkpoint_dir += '_add_pos'
     log_dir += '_add_pos'
@@ -124,6 +123,10 @@ train_accuracy = tf.keras.metrics.SparseCategoricalAccuracy(name='train_accuracy
 val_loss = tf.keras.metrics.Mean(name='val_loss')
 val_accuracy = tf.keras.metrics.SparseCategoricalAccuracy(name='val_accuracy')
 
+
+
+# import os
+# os.environ["TF_XLA_FLAGS"] = "--tf_xla_enable_xla_devices=0"
 @tf.function
 def train_step(train_data, train_pos, train_transition, labels, include_pos, step):
     with tf.GradientTape() as tape:
@@ -134,6 +137,12 @@ def train_step(train_data, train_pos, train_transition, labels, include_pos, ste
     gradients = tape.gradient(loss, model.trainable_variables)
     if gradient_clip:
         gradients, _ = tf.clip_by_global_norm(gradients, 1.0)
+
+
+    for grad, var in zip(gradients, model.trainable_variables):
+        print(f"Gradient for {var.name}: {grad}")
+        print(f"Shape: {grad.shape}, NaN: {tf.reduce_any(tf.math.is_nan(grad))}, Inf: {tf.reduce_any(tf.math.is_inf(grad))}")
+    # breakpoint()
     optimizer.apply_gradients(zip(gradients, model.trainable_variables))
 
     train_loss(loss)

@@ -9,7 +9,7 @@ from keras_nlp.layers.transformer_layer_utils import (  # isort:skip
     compute_causal_mask,
     merge_padding_and_attention_mask,
 )
-from train.scheduled_sampling import scheduled_sampler
+from scheduled_sampling import scheduled_sampler
 
 class LSTM(Model):
   def __init__(self, vocab_size, embedding_dim, batch_size, rnn_units,

@@ -10,7 +10,7 @@ import argparse
 import shutil
 import sys
 sys.path.append('/home/wzengad/projects/MD_code/LSTM')
-from utils import *
+from train.utils import *
 from models import *
 
 parser = argparse.ArgumentParser(description='LSTM Task')
