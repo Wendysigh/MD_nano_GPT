@@ -6,10 +6,8 @@ import os
 import re
 import numpy as np
 import matplotlib.pyplot as plt
-import sys
-sys.path.append('/home/wzengad/projects/MD_code/LSTM')
-from train.utils import *
-from models import *
+from model_util.utils import *
+from model_util.models import *
 from tqdm import tqdm, trange
 import argparse
 import pandas as pd

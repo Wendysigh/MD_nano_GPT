@@ -2,13 +2,13 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import tensorflow as tf
 tf.compat.v1.enable_eager_execution() 
 import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+os.environ['export TF_ENABLE_ONEDNN_OPTS'] = '0'
 import re
 import numpy as np
 
-import sys
-sys.path.append('/home/wzengad/projects/MD_code/LSTM')
-from train.utils import *
-from models import *
+from model_util.utils import *
+from model_util.models import *
 from tqdm import tqdm, trange
 import argparse
 np.random.seed(7)
@@ -17,16 +17,14 @@ np.random.seed(7)
 
 parser = argparse.ArgumentParser(description='md generation')
 parser.add_argument('--state', default=True, action='store_false')
-parser.add_argument('--data_type', type=str, default='phi',choices=['RMSD', 'MacroAssignment','phi','psi'])
+parser.add_argument('--data_type', type=str, default='Fip35_micro',choices=['RMSD', 'MacroAssignment','phi','psi','Fip35_micro'])
 parser.add_argument('--sample_strategy', default='category', choices = ['category', 'argmax', 'top_p', 'top_k'])
 parser.add_argument('--gpu_id', type=str, default='4')
-parser.add_argument('--ckpt_task', type=str, default='Label0.0_window50_interval10_lr0.001_l100_block1_no_pos')
+parser.add_argument('--ckpt_task', type=str, default='Label0.0_window50_interval1_lr0.0005_emb_dim128_l100_block2_scheduled')
 parser.add_argument('--task', type=str, default='trans_gpt')
 parser.add_argument('--reset_thresh', type=int, default=2000)
-parser.add_argument('--gen_files', type=int, default=20)
 parser.add_argument('--gen_length', type=int, default=100000)
-parser.add_argument('--ckpt_choice', type=str, default='epoch150')
-parser.add_argument('--preprocess_type', type=str, default='count', choices=['count', 'ordered_count', 'dense'])
+parser.add_argument('--ckpt_choice', type=str, default='epoch20')
 parser.add_argument('--seed', type=str, default='valid', choices=['train', 'valid'])
 
 args = parser.parse_args()
@@ -36,14 +34,13 @@ seq_lenth = int(re.search(r'_l(\d+)', ckpt_task).group(1))
 block_num = int(re.search(r'_block(\d+)', ckpt_task).group(1))
 interval = int(re.search(r'_interval(\d+)', ckpt_task).group(1))
 
-gen_files = args.gen_files
+
 gen_length = args.gen_length
 ckpt_choice = args.ckpt_choice
 task = args.task
 state = args.state
 reset_thresh = args.reset_thresh
 # state = not ckpt_task.endswith('stateless')
-preprocess_type = args.preprocess_type
 os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu_id
 embedding_dim = 128 
 rnn_units = 128
@@ -52,16 +49,21 @@ seed = args.seed
 include_pos = False 
 pretrained_emb = True if 'transE' in ckpt_task else False
 
+all_file_num = 55 if data_type == 'Fip35_micro' else 100
+train_shape = int(0.8 * all_file_num)
+valid_shape = all_file_num - train_shape
+gen_files = valid_shape
+
 physical_devices = tf.config.experimental.list_physical_devices('GPU')
 assert len(physical_devices) > 0, "Not enough GPU hardware devices available"
 config = tf.config.experimental.set_memory_growth(physical_devices[0], True)
 
-datapath = f'/home/wzengad/projects/MD_code/data/{data_type}/'
-checkpoint_dir = f'/home/wzengad/projects/MD_code/LSTM/checkpoint/{data_type}/{task}/{ckpt_task}/'
+datapath = f'data/{data_type}/'
+checkpoint_dir = f'checkpoint/{data_type}/{task}/{ckpt_task}/'
 if not state:
-    save_dir = f'/home/wzengad/projects/MD_code/LSTM/results/{data_type}/{task}/{ckpt_task}/{sample_strategy}/{ckpt_choice}_stateless_{gen_length}_{seed}_interval{interval}'
+    save_dir = f'results/{data_type}/{task}/{ckpt_task}/{sample_strategy}/{ckpt_choice}_stateless_{gen_length}_{seed}_interval{interval}'
 else:
-    save_dir = f'/home/wzengad/projects/MD_code/LSTM/results/{data_type}/{task}/{ckpt_task}/{sample_strategy}/{ckpt_choice}_{gen_length}_{seed}_interval{interval}'
+    save_dir = f'results/{data_type}/{task}/{ckpt_task}/{sample_strategy}/{ckpt_choice}_{gen_length}_{seed}_interval{interval}'
 os.makedirs(save_dir, exist_ok=True)
 
 train0 = np.loadtxt(datapath+'train',dtype=int).reshape(-1)
@@ -71,12 +73,7 @@ valid = valid0.reshape(-1, interval).T.flatten()
 
 vocab_size=len(np.unique(train))
 pos_size = 100
-
-if pretrained_emb:
-    emb = np.load('/home/wzengad/projects/OpenKE/checkpoint/entity2vec.npy')
-    emb = tf.convert_to_tensor(emb, dtype=tf.float32)
-else:
-    emb = None
+emb = None
 
 # gen_files as batchsize
 if task =='share_emb':
@@ -102,17 +99,14 @@ if include_pos:
 else:
     save_name = f'no_gen_pos_prediction_'
 
-# vdata_ite=iter(vdataset)
-# initialize gen_input, text_generated as seqs from test dataset
+
 if seed == 'valid':
-    gen_input = valid.reshape(20,-1)[:gen_files, :seq_lenth]
+    gen_input = valid.reshape(valid_shape,-1)[:gen_files, :seq_lenth]
 elif seed == 'train':
-    gen_input = train.reshape(80,-1)[:gen_files, :seq_lenth]
-# np.random.shuffle(gen_input)
+    gen_input = train.reshape(train_shape,-1)[:gen_files, :seq_lenth]
 
 gen_pos = tf.map_fn(cal_pos, gen_input)
 gen_trans = tf.map_fn(cal_trans, gen_input)
-# gen_input, gen_pos, gen_transition = vdata_ite.get_next()[0], vdata_ite.get_next()[2], vdata_ite.get_next()[3]  
 text_generated = gen_input
 
 if sample_strategy == 'category':

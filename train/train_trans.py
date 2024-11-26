@@ -1,7 +1,7 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 from ast import arg
 import os
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '0'
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 import tensorflow as tf
 tf.compat.v1.enable_eager_execution() 
 
@@ -12,8 +12,8 @@ import pandas as pd
 import argparse
 import shutil
 
-from utils import *
-from models import *
+from models.utils import *
+from models.models import *
 
 np.random.seed(7)
 tf.random.set_seed(7)
@@ -139,10 +139,10 @@ def train_step(train_data, train_pos, train_transition, labels, include_pos, ste
         gradients, _ = tf.clip_by_global_norm(gradients, 1.0)
 
 
-    for grad, var in zip(gradients, model.trainable_variables):
-        print(f"Gradient for {var.name}: {grad}")
-        print(f"Shape: {grad.shape}, NaN: {tf.reduce_any(tf.math.is_nan(grad))}, Inf: {tf.reduce_any(tf.math.is_inf(grad))}")
-    # breakpoint()
+    # for grad, var in zip(gradients, model.trainable_variables):
+    #     print(f"Gradient for {var.name}: {grad}")
+    #     print(f"Shape: {grad.shape}, NaN: {tf.reduce_any(tf.math.is_nan(grad))}, Inf: {tf.reduce_any(tf.math.is_inf(grad))}")
+
     optimizer.apply_gradients(zip(gradients, model.trainable_variables))
 
     train_loss(loss)

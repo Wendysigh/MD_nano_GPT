@@ -11,14 +11,19 @@ from tqdm import tqdm
 # For Fip35
 
 x=np.array([])
-for i in range(56):
+total_num = 55 
+train = np.array([])
+valid = np.array([])
+train_num = int(0.8 * total_num)
+
+for i in range(train_num):
     single_file = np.loadtxt(f'data/Fip35/micro1000/traj_{i}',dtype=int)
-    x = np.append(x, single_file)
-num = int(0.8 * len(x))    
-train = x[:num]
-valid = x[num:]
-np.savetxt('data/Fip35/micro1000/train',train,fmt='%i')
-np.savetxt('data/Fip35/micro1000/test',valid,fmt='%i')
+    train = np.append(train, single_file)
+for i in range(train_num, total_num):
+    single_file = np.loadtxt(f'data/Fip35/micro1000/traj_{i}',dtype=int)
+    valid = np.append(valid, single_file)
+np.savetxt('data/Fip35_micro/train',train,fmt='%i')
+np.savetxt('data/Fip35_micro/test',valid,fmt='%i')
 
 
 # For Macro

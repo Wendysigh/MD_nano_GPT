@@ -10,9 +10,8 @@ import argparse
 import shutil
 import sys
 sys.path.append('/home/wzengad/projects/MD_code/LSTM')
-from train.utils import *
-from models import *
-
+from model_util.utils import *
+from model_util.models import *
 parser = argparse.ArgumentParser(description='LSTM Task')
 parser.add_argument('--task', type=str, default='4state',choices=['RMSD','phi','psi','4state'])
 parser.add_argument('--batch_size', type=int, default=64)

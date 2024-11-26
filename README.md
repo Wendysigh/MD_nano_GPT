@@ -7,6 +7,7 @@ Code are tested on Linux and Python3.6 with Pytorch on 2080Ti GPU.
 
 
 ### Env Requirement ###
+```
 conda create -n tf_env python=3.9
 conda activate tf_env
 conda install conda-forge::cudatoolkit=11.2.2
@@ -21,6 +22,9 @@ nano $CONDA_PREFIX/etc/conda/activate.d/env_vars.sh
 <!-- #!/bin/bash
 export LD_LIBRARY_PATH=$CONDA_PREFIX/lib:$LD_LIBRARY_PATH -->
 
+git clone https://github.com/msmbuilder/msmbuilder2022.git # old msmbuilder only works for python<3.6>
+python -m pip install ./msmbuilder2022
+```
 ### Basic usage ###
 
 It contains the following files and subfolders:

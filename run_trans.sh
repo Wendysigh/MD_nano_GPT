@@ -6,6 +6,7 @@ source /home/zengwenqi/local/anaconda3/bin/activate tf_env
 
 # python Pointer_Net/train2.py --lr=0.0002 --hidden_dim=64 --dropout=0.1 --num_layers=2 --batch_size=64
 python -u train/train_trans.py --batch_type=window --interval=1 --trans_block=2 --gpu_id=0
+python -u generation.py --gpu_id=2
 # python script/run.py -c config/transductive/fb15k237_astarnet.yaml --gpus [0]
 # cd /home/zengwenqi/projects/Trace_Seg_7class
 # python -u train_CRF.py
