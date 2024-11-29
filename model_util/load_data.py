@@ -8,7 +8,26 @@ import argparse
 import shutil
 from tqdm import tqdm
 
-# For Fip35
+# For Fip35-macro
+
+x=np.array([])
+total_num = 55 
+train = np.array([])
+valid = np.array([])
+train_num = int(0.8 * total_num)
+
+for i in range(train_num):
+    single_file = np.loadtxt(f'data/Fip35/macro5/macro5_{i}',dtype=int)
+    train = np.append(train, single_file)
+for i in range(train_num, total_num):
+    single_file = np.loadtxt(f'data/Fip35/macro5/macro5_{i}',dtype=int)
+    valid = np.append(valid, single_file)
+np.savetxt('data/Fip35_macro/train',train,fmt='%i')
+np.savetxt('data/Fip35_macro/test',valid,fmt='%i')
+
+
+
+# For Fip35-micro
 
 x=np.array([])
 total_num = 55 
