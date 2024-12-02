@@ -5,8 +5,8 @@
 source /home/zengwenqi/local/anaconda3/bin/activate tf_env
 
 
-python -u train_trans.py --batch_type=window --interval=1 --trans_block=2 --gpu_id=4
-python -u generation.py --gpu_id=2
+python -u train_trans.py --batch_type=window --interval=5 --trans_block=2 --gpu_id=4
+python -u generation.py --gpu_id=2 --ckpt_choice=epoch40 --ckpt_task=Label0.0_window50_interval5_lr0.0005_emb_dim128_l100_block2_scheduled
 # python script/run.py -c config/transductive/fb15k237_astarnet.yaml --gpus [0]
 # cd /home/zengwenqi/projects/Trace_Seg_7class
 # python -u train_CRF.py

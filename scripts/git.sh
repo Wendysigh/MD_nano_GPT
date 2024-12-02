@@ -2,7 +2,7 @@ cd /path/to/your/project
 git init
 git add .
 git status
-git commit -m "Initial commit"
+git commit -m "upload"
 
 
 

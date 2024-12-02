@@ -17,7 +17,7 @@ np.random.seed(7)
 
 parser = argparse.ArgumentParser(description='md generation')
 parser.add_argument('--state', default=True, action='store_false')
-parser.add_argument('--data_type', type=str, default='Fip35_micro',choices=['RMSD', 'MacroAssignment','phi','psi','Fip35_micro'])
+parser.add_argument('--data_type', type=str, default='Fip35_macro',choices=['RMSD', 'MacroAssignment','phi','psi','Fip35_micro'])
 parser.add_argument('--sample_strategy', default='category', choices = ['category', 'argmax', 'top_p', 'top_k'])
 parser.add_argument('--gpu_id', type=str, default='4')
 parser.add_argument('--ckpt_task', type=str, default='Label0.0_window50_interval1_lr0.0005_emb_dim128_l100_block2_scheduled')
