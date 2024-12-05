@@ -49,7 +49,7 @@ seed = args.seed
 include_pos = False 
 pretrained_emb = True if 'transE' in ckpt_task else False
 
-all_file_num = 55 if data_type == 'Fip35_micro' else 100
+all_file_num = 55 if "Fip35" in data_type else 100
 train_shape = int(0.8 * all_file_num)
 valid_shape = all_file_num - train_shape
 gen_files = valid_shape
@@ -124,6 +124,7 @@ for i in trange(gen_length):
     predictions = model(gen_input, gen_pos, gen_trans, None, emb, include_pose=include_pos, training=False)
     if 'trans' in task:
         predictions = predictions[:,-1,:]
+    # breakpoint()
     # tf.random.set_seed(0)
     predicted_id = sampler(predictions, 1)
     # reshape predicted_id. The first dimension is consistent with num of gen_files

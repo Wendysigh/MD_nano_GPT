@@ -11,13 +11,17 @@ from tqdm import tqdm
 # For Fip35-macro
 
 x=np.array([])
-total_num = 55 
+total_num = 55
 train = np.array([])
 valid = np.array([])
 train_num = int(0.8 * total_num)
 
 for i in range(train_num):
     single_file = np.loadtxt(f'data/Fip35/macro5/macro5_{i}',dtype=int)
+    if i == 23:
+        single_file = single_file[:32585]
+        # continue # 23 has entry, 32586, which cannot be subsampled by 5
+    # print(i, single_file.shape)
     train = np.append(train, single_file)
 for i in range(train_num, total_num):
     single_file = np.loadtxt(f'data/Fip35/macro5/macro5_{i}',dtype=int)
