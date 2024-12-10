@@ -4,8 +4,6 @@ git add .
 git status
 git commit -m "upload"
 
-
-
 git config --global user.name "Wenqi"
 git config --global user.email wzengad@connect.ust.hk
 git commit --amend --reset-author

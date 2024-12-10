@@ -11,23 +11,41 @@ from tqdm import tqdm
 # For Fip35-macro
 
 x=np.array([])
-total_num = 55
+total_num = 57
 train = np.array([])
 valid = np.array([])
 train_num = int(0.8 * total_num)
 
+# choice = 'macro5'
+choice = 'micro1000'
+
 for i in range(train_num):
-    single_file = np.loadtxt(f'data/Fip35/macro5/macro5_{i}',dtype=int)
-    if i == 23:
-        single_file = single_file[:32585]
-        # continue # 23 has entry, 32586, which cannot be subsampled by 5
-    # print(i, single_file.shape)
+    if choice=='macro5':
+        path = f"data/Fip35/unzip_all/regen/{choice}/macro5_{i}"
+    else:
+        path = f"data/Fip35/unzip_all/regen/{choice}/traj_{i}"
+    # path = f"data/Fip35/macro5/macro5_{i}"
+    single_file = np.loadtxt(path,dtype=int)
+    if single_file.shape[0] % 5 != 0:
+        single_file = single_file[:-(single_file.shape[0] % 5)]
+    print(single_file.shape)
+    # if i == 23:
+    #     single_file = single_file[:32585] # continue # 23 has entry, 32586, which cannot be subsampled by 5
     train = np.append(train, single_file)
+
 for i in range(train_num, total_num):
-    single_file = np.loadtxt(f'data/Fip35/macro5/macro5_{i}',dtype=int)
+    if choice=='macro5':
+        path = f"data/Fip35/unzip_all/regen/{choice}/macro5_{i}"
+    else:
+        path = f"data/Fip35/unzip_all/regen/{choice}/traj_{i}"
+    single_file = np.loadtxt( path , dtype=int)
+    print(single_file.shape)
     valid = np.append(valid, single_file)
-np.savetxt('data/Fip35_macro/train',train,fmt='%i')
-np.savetxt('data/Fip35_macro/test',valid,fmt='%i')
+
+print(train.shape)
+print(valid.shape)
+np.savetxt(f'data/Fip35_{choice}/train',train,fmt='%i')
+np.savetxt(f'data/Fip35_{choice}/test',valid,fmt='%i')
 
 
 
