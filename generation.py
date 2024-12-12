@@ -49,7 +49,7 @@ seed = args.seed
 include_pos = False 
 pretrained_emb = True if 'transE' in ckpt_task else False
 
-all_file_num = 55 if "Fip35" in data_type else 100
+all_file_num = 57 if "Fip35" in data_type else 100
 train_shape = int(0.8 * all_file_num)
 valid_shape = all_file_num - train_shape
 gen_files = valid_shape

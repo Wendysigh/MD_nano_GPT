@@ -2,7 +2,7 @@ cd /path/to/your/project
 git init
 git add .
 git status
-git commit -m "upload"
+git commit -m "update"
 
 git config --global user.name "Wenqi"
 git config --global user.email wzengad@connect.ust.hk
