@@ -52,7 +52,8 @@ pretrained_emb = True if 'transE' in ckpt_task else False
 all_file_num = 57 if "Fip35" in data_type else 100
 train_shape = int(0.8 * all_file_num)
 valid_shape = all_file_num - train_shape
-gen_files = valid_shape
+gen_files= 20
+# gen_files = valid_shape
 
 physical_devices = tf.config.experimental.list_physical_devices('GPU')
 assert len(physical_devices) > 0, "Not enough GPU hardware devices available"
@@ -61,9 +62,9 @@ config = tf.config.experimental.set_memory_growth(physical_devices[0], True)
 datapath = f'data/{data_type}/'
 checkpoint_dir = f'checkpoint/{data_type}/{task}/{ckpt_task}/'
 if not state:
-    save_dir = f'results/{data_type}/{task}/{ckpt_task}/{sample_strategy}/{ckpt_choice}_stateless_{gen_length}_{seed}_interval{interval}'
+    save_dir = f'results/{data_type}/{task}/{ckpt_task}/{sample_strategy}/{ckpt_choice}_stateless_{gen_length}_{seed}_interval{interval}_gen{gen_files}'
 else:
-    save_dir = f'results/{data_type}/{task}/{ckpt_task}/{sample_strategy}/{ckpt_choice}_{gen_length}_{seed}_interval{interval}'
+    save_dir = f'results/{data_type}/{task}/{ckpt_task}/{sample_strategy}/{ckpt_choice}_{gen_length}_{seed}_interval{interval}_gen{gen_files}'
 os.makedirs(save_dir, exist_ok=True)
 
 train0 = np.loadtxt(datapath+'train',dtype=int).reshape(-1)
@@ -99,9 +100,9 @@ if include_pos:
 else:
     save_name = f'no_gen_pos_prediction_'
 
-
 if seed == 'valid':
-    gen_input = valid.reshape(valid_shape,-1)[:gen_files, :seq_lenth]
+    # gen_input = valid.reshape(valid_shape,-1)[:gen_files, :seq_lenth]
+    gen_input = valid.reshape(gen_files,-1)[:gen_files, :seq_lenth]
 elif seed == 'train':
     gen_input = train.reshape(train_shape,-1)[:gen_files, :seq_lenth]
 
@@ -119,16 +120,14 @@ elif sample_strategy == 'top_k':
     sampler = top_k_sampler  
 
 for i in trange(gen_length):
-    # predictions = model(gen_input, gen_pos, gen_transition, include_pose=include_pos, include_trans=False, training=False)
-    
     predictions = model(gen_input, gen_pos, gen_trans, None, emb, include_pose=include_pos, training=False)
     if 'trans' in task:
         predictions = predictions[:,-1,:]
-    # breakpoint()
-    # tf.random.set_seed(0)
+
     predicted_id = sampler(predictions, 1)
     # reshape predicted_id. The first dimension is consistent with num of gen_files
     predicted_id = tf.reshape(predicted_id, [gen_files,1])
+
     gen_input = tf.concat([gen_input[:,1:], predicted_id], axis=1)
     gen_pos = tf.map_fn(cal_pos, gen_input)
     gen_trans = tf.map_fn(cal_trans, gen_input)
