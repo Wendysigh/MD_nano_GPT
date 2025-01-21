@@ -35,7 +35,7 @@ for i in range(train_num):
 
 for i in range(train_num, total_num):
     if choice=='macro5':
-        path = f"data/Fip35/unzip_all/regen/{choice}/macro5_{i}"
+        path = f"data/Fip35/unzip_all/{choice}/macro5_{i}"
     else:
         path = f"data/Fip35/unzip_all/regen/{choice}/traj_{i}"
     single_file = np.loadtxt( path , dtype=int)

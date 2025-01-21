@@ -13,17 +13,19 @@ tf.random.set_seed(7)
 
 parser = argparse.ArgumentParser(description='LSTM generation')
 parser.add_argument('--state', default=True, action='store_false')
-parser.add_argument('--data_type', type=str, default='phi',choices=['RMSD', 'MacroAssignment','phi','psi'])
+parser.add_argument('--data_type', type=str, default='Fip35_micro100',
+                    choices=['RMSD', 'MacroAssignment', 'phi', 'psi', 
+                            'Fip35_micro100', 'Fip35_macro5'])
 parser.add_argument('--sample_strategy', default='category', choices = ['category', 'argmax', 'top_p', 'top_k'])
 parser.add_argument('--gpu_id', type=str, default='4')
-parser.add_argument('--ckpt_task', type=str, default='Label0.0_sparse50_interval2_lr0.001_l100_units512_emb128_no_pos')
+parser.add_argument('--ckpt_task', type=str, default='Label0.0_sparse50_interval1_lr0.001_emb_dim128_l100_units512_emb128_no_pos')
 parser.add_argument('--interval', type=int, default=10)
 parser.add_argument('--task', type=str, default='lstm')
 parser.add_argument('--seq_lenth', type=int, default=100)
 parser.add_argument('--reset_thresh', type=int, default=2000)
 parser.add_argument('--gen_files', type=int, default=20)
 parser.add_argument('--gen_length', type=int, default=100000)
-parser.add_argument('--ckpt_choice', type=str, default='epoch150')
+parser.add_argument('--ckpt_choice', type=str, default='epoch20')
 parser.add_argument('--preprocess_type', type=str, default='count', choices=['count', 'ordered_count', 'dense'])
 parser.add_argument('--seed', type=str, default='valid', choices=['train', 'valid'])
 
@@ -49,17 +51,18 @@ data_type = args.data_type
 seed = args.seed
 include_pos = False if 'no_pos' in ckpt_task else True
 pretrained_emb = True if 'transE' in ckpt_task else False
+block_num = int(re.search(r'_block(\d+)', ckpt_task).group(1)) if '_block' in ckpt_task else 2
 
 physical_devices = tf.config.experimental.list_physical_devices('GPU')
 assert len(physical_devices) > 0, "Not enough GPU hardware devices available"
 config = tf.config.experimental.set_memory_growth(physical_devices[0], True)
 
-datapath = f'/home/wzengad/projects/MD_code/data/{data_type}/'
-checkpoint_dir = f'/home/wzengad/projects/MD_code/LSTM/checkpoint/{data_type}/{task}/{ckpt_task}/'
+datapath = f'data/{data_type}/'
+checkpoint_dir = f'checkpoint/{data_type}/{task}/{ckpt_task}/'
 if not state:
-    save_dir = f'/home/wzengad/projects/MD_code/LSTM/results/{data_type}/{task}/{ckpt_task}/{sample_strategy}/{ckpt_choice}_stateless_{gen_length}_{seed}_interval{interval}'
+    save_dir = f'results/{data_type}/{task}/{ckpt_task}/{sample_strategy}/{ckpt_choice}_stateless_{gen_length}_{seed}_interval{interval}_gen{gen_files}'
 else:
-    save_dir = f'/home/wzengad/projects/MD_code/LSTM/results/{data_type}/{task}/{ckpt_task}/{sample_strategy}/{ckpt_choice}_{gen_length}_{seed}_interval{interval}'
+    save_dir = f'results/{data_type}/{task}/{ckpt_task}/{sample_strategy}/{ckpt_choice}_{gen_length}_{seed}_interval{interval}_gen{gen_files}'
 os.makedirs(save_dir, exist_ok=True)
 
 train0 = np.loadtxt(datapath+'train',dtype=int).reshape(-1)
@@ -77,15 +80,12 @@ else:
     emb = None
 
 # gen_files as batchsize
-if task =='share_emb':
-    model = LSTM_share_emb(vocab_size, pos_size, embedding_dim, gen_files , rnn_units, state, return_sequences=False)
-elif task =='lstm':
-    model = model = LSTM(vocab_size, embedding_dim, gen_files, rnn_units, state, seq_lenth, return_sequences=False)
-elif task == 'bi_lstm':
-    model = bi_LSTM(vocab_size, pos_size, embedding_dim, gen_files , rnn_units, state, return_sequences=False)
-elif task == 'lstm_trans':
-    model = LSTM_trans(vocab_size, pos_size, embedding_dim, gen_files, rnn_units, state, return_sequences=False)
-
+if task == 'lstm':
+    model = LSTM(vocab_size, embedding_dim, gen_files, rnn_units, state, seq_lenth)
+elif task == 'trans_gpt':
+    model = trans_gpt(vocab_size, pos_size, embedding_dim, gen_files, seq_lenth, 
+                     num_layers=block_num, inference=True)
+    
 if ckpt_choice == 'best_loss':
     model.load_weights(checkpoint_dir + 'minTestLoss')
 elif 'epoch' in ckpt_choice:
@@ -122,9 +122,7 @@ for i in trange(gen_length):
     # predictions = model(gen_input, gen_pos, gen_transition, include_pose=include_pos, include_trans=False, training=False)
     
     predictions = model(gen_input, gen_pos, gen_trans, include_pose=include_pos, training=False)
-    if 'trans' in task:
-        predictions = predictions[:,-1,:]
-    predicted_id = sampler(predictions, 1)
+    predicted_id = sampler(predictions[:,-1,:], 1)
     # reshape predicted_id. The first dimension is consistent with num of gen_files
     predicted_id = tf.reshape(predicted_id, [gen_files,1])
     gen_input = tf.concat([gen_input[:,1:], predicted_id], axis=1)

@@ -4,6 +4,9 @@
 # srun -N 1 --gres gpu:rtx_3090:1 --cpus-per-task 2 --time-min 14400 --qos preemptive --pty bash
 source /home/zengwenqi/local/anaconda3/bin/activate tf_env
 
+python -u train_once_lstm.py --gpu_id=1 --data_type='Fip35_macro5'
+python -u train_once_lstm.py --gpu_id=1 --data_type='Fip35_micro100'
+
 
 python -u train_trans.py --batch_type=window --interval=5 --trans_block=2 --gpu_id=1 --data_type='Fip35_macro5'
 python -u train_trans.py --batch_type=window --interval=1 --trans_block=2 --gpu_id=1 --data_type='Fip35_macro5'

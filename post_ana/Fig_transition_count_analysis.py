@@ -51,21 +51,23 @@ physical_devices = tf.config.experimental.list_physical_devices('GPU')
 assert len(physical_devices) > 0, "Not enough GPU hardware devices available"
 config = tf.config.experimental.set_memory_growth(physical_devices[0], True)
 
-datapath = f'/home/wzengad/projects/MD_code/data/4state.txt'
+datapath = f'/home/zengwenqi/projects/MD_code2/data/4state_discrete.txt'
 checkpoint_dir = f'/home/wzengad/projects/MD_code/LSTM/checkpoint/{data_type}/{task}/{ckpt_task}/'
 
-num_bins=4
-sm_length=50
-threshold=100
+# num_bins=4
+# sm_length=50
+# threshold=100
 X=[2.0, 0.5, -0.5, -2.0] 
 
-input_x, input_y = np.loadtxt(datapath, unpack=True, usecols=(0,1), skiprows=1)
-input_x = running_mean(input_x, sm_length) # average on sm_length states
-idx_x = map(lambda x: find_nearest(X, x), input_x) # clustering
+# input_x, input_y = np.loadtxt(datapath, unpack=True, usecols=(0,1), skiprows=1)
+# input_x = running_mean(input_x, sm_length) # average on sm_length states
+# idx_x = map(lambda x: find_nearest(X, x), input_x) # clustering
 
-idx_2d = list(idx_x)
-idx_2d = Rm_peaks_steps(idx_2d, threshold) # actually threshold=100 is too large to filter out peaks 
-text = np.array(idx_2d)
+# idx_2d = list(idx_x)
+# idx_2d = Rm_peaks_steps(idx_2d, threshold) # actually threshold=100 is too large to filter out peaks 
+# text = np.array(idx_2d)
+
+text = np.loadtxt(datapath, dtype=int)
 md = text[:int(len(text)*0.8)]
 vocab_size=len(X)
 
@@ -109,9 +111,9 @@ for T in range(50,1500,50):
     for file in range(0,50,1):
         g=[]
         l=[]
-        gpt_path = f'/home/wzengad/projects/MD_code/LSTM/results/4state/trans_gpt/{ckpt_task}/category/{ckpt_choice}_120000_valid_interval1/prediction_{file}'
+        gpt_path = f'/home/zengwenqi/projects/MD_code2/results/4state/trans_gpt/{ckpt_task}/category/{ckpt_choice}_120000_valid_interval1/prediction_{file}'
         gpt = np.loadtxt(gpt_path, dtype=int).reshape(-1)
-        lstm_path = f'/home/wzengad/projects/MD_code/LSTM/results/4state/lstm/lr0.001_interval1_seq100/category/{ckpt_choice}_120000_valid_interval1/prediction_{file}'
+        lstm_path = f'/home/zengwenqi/projects/MD_code2/results/4state/lstm/lr0.001_interval1_seq100/category/{ckpt_choice}_120000_valid_interval1/prediction_{file}'
         lstm = np.loadtxt(lstm_path, dtype=int).reshape(-1)
 
         M_g = get_adjcent_count(gpt, T)

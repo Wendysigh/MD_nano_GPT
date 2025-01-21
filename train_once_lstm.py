@@ -17,7 +17,9 @@ tf.random.set_seed(7)
 parser = argparse.ArgumentParser(description='LSTM Task')
 parser.add_argument('--task', type=str, default='lstm')
 parser.add_argument('--batch_size', type=int, default=64)
-parser.add_argument('--data_type', type=str, default='phi',choices=['RMSD', 'MacroAssignment','phi','psi'])
+parser.add_argument('--data_type', type=str, default='Fip35_macro5', 
+                    choices=['RMSD', 'MacroAssignment', 'phi', 'psi', 'Fip35_micro100', 'Fip35_macro5'])
+
 parser.add_argument('--interval', type=int, default=1)
 parser.add_argument('--seq_length', type=int, default=100)
 parser.add_argument('--state', default=True, action='store_false')
@@ -60,10 +62,8 @@ physical_devices = tf.config.experimental.list_physical_devices('GPU')
 assert len(physical_devices) > 0, "Not enough GPU hardware devices available"
 config = tf.config.experimental.set_memory_growth(physical_devices[0], True)
 
-root_dir = '/home/wzengad/projects/MD_code/'
-
-checkpoint_dir = root_dir + f'LSTM/checkpoint/{data_type}/{task}/Label{label_smoothing}_{batch_type}{window_shift}_interval{interval}_lr{lr}_l{seq_length}'
-log_dir = root_dir + f'LSTM/logs/{data_type}/{task}/Label{label_smoothing}_{batch_type}{window_shift}_interval{interval}_lr{lr}_l{seq_length}'
+checkpoint_dir = f'checkpoint/{data_type}/{task}/Label{label_smoothing}_{batch_type}{window_shift}_interval{interval}_lr{lr}_emb_dim{embedding_dim}_l{seq_length}'
+log_dir = f'logs/{data_type}/{task}/Label{label_smoothing}_{batch_type}{window_shift}_interval{interval}_lr{lr}_emb_dim{embedding_dim}_l{seq_length}'
 
 if 'lstm' in task:
     checkpoint_dir += f'_units{rnn_units}_emb{embedding_dim}'
@@ -89,11 +89,12 @@ if pretrained_emb:
 shutil.rmtree(log_dir,ignore_errors=True)
 summary_writer = tf.summary.create_file_writer(log_dir)
 
-datapath = root_dir + f'data/{data_type}/'
+datapath = f'data/{data_type}/'
 train0 = np.loadtxt(datapath+'train',dtype=int).reshape(-1)
 train = train0.reshape(-1, interval).T.flatten()
 valid0 = np.loadtxt(datapath+'test',dtype=int).reshape(-1)
 valid = valid0.reshape(-1, interval).T.flatten()
+
 if pretrained_emb:
     emb = np.load('/home/wzengad/projects/OpenKE/checkpoint/entity2vec.npy')
     emb = tf.convert_to_tensor(emb, dtype=tf.float32)
