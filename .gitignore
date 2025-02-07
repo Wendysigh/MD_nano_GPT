@@ -27,6 +27,9 @@ results/
 slurm_logs/
 train/
 msmbuilder2022/
+fig_data/
+generate/
+post_ana/
 
 # IDE
 .idea/

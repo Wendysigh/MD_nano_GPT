@@ -4,10 +4,13 @@ tf.compat.v1.enable_eager_execution()
 import os
 import numpy as np
 import re
-from models.utils import *
-from models.lstm import *
 from tqdm import tqdm, trange
 import argparse
+
+from utils.utils import *
+from models.lstm import *
+from models.transformer import *
+
 np.random.seed(7)
 tf.random.set_seed(7)
 

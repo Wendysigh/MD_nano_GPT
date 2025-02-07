@@ -7,12 +7,13 @@ os.environ['export TF_ENABLE_ONEDNN_OPTS'] = '0'
 import re
 import numpy as np
 
-from models.utils import *
-from models.lstm import *
 from tqdm import tqdm, trange
 import argparse
 np.random.seed(7)
-# from tensor2tensor.visualization import attention
+
+from utils.utils import *
+from models.lstm import *
+from models.transformer import *
 
 
 parser = argparse.ArgumentParser(description='md generation')
