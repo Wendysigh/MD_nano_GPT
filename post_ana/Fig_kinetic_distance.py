@@ -6,11 +6,14 @@ import re
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.font_manager
-from model_util.utils import *
-from model_util.models import *
 from tqdm import tqdm, trange
 import argparse
 import pandas as pd
+
+from utils.utils import *
+from models.lstm import *
+from models.transformer import *
+
 np.random.seed(7)
 from sklearn import preprocessing
 import matplotlib.style as style 

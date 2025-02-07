@@ -5,8 +5,9 @@ import os
 import re
 import numpy as np
 import pandas as pd
-from model_util.utils import *
-from model_util.models import *
+from utils.utils import *
+from models.lstm import *
+from models.transformer import *
 from tqdm import tqdm, trange
 from matplotlib import pyplot as plt
 import argparse

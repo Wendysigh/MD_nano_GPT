@@ -2,56 +2,58 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import tensorflow as tf
 tf.compat.v1.enable_eager_execution() 
 import os
-import numpy as np
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+os.environ['export TF_ENABLE_ONEDNN_OPTS'] = '0'
 import re
-from model_util.utils import *
-from model_util.models import *
+import numpy as np
+
+from models.utils import *
+from models.lstm import *
 from tqdm import tqdm, trange
 import argparse
 np.random.seed(7)
-tf.random.set_seed(7)
+# from tensor2tensor.visualization import attention
 
-parser = argparse.ArgumentParser(description='LSTM generation')
+
+parser = argparse.ArgumentParser(description='md generation')
 parser.add_argument('--state', default=True, action='store_false')
-parser.add_argument('--data_type', type=str, default='Fip35_micro100',
-                    choices=['RMSD', 'MacroAssignment', 'phi', 'psi', 
-                            'Fip35_micro100', 'Fip35_macro5'])
+parser.add_argument('--data_type', type=str, default='Fip35_macro5',choices=['RMSD', 'MacroAssignment','phi','psi','Fip35_micro100','Fip35_macro5'])
 parser.add_argument('--sample_strategy', default='category', choices = ['category', 'argmax', 'top_p', 'top_k'])
 parser.add_argument('--gpu_id', type=str, default='4')
-parser.add_argument('--ckpt_task', type=str, default='Label0.0_sparse50_interval1_lr0.001_emb_dim128_l100_units512_emb128_no_pos')
-parser.add_argument('--interval', type=int, default=10)
-parser.add_argument('--task', type=str, default='lstm')
-parser.add_argument('--seq_lenth', type=int, default=100)
+parser.add_argument('--ckpt_task', type=str, default='Label0.0_window50_interval1_lr0.0005_emb_dim128_l100_block2_scheduled')
+parser.add_argument('--task', type=str, default='trans_gpt')
 parser.add_argument('--reset_thresh', type=int, default=2000)
-parser.add_argument('--gen_files', type=int, default=20)
 parser.add_argument('--gen_length', type=int, default=100000)
 parser.add_argument('--ckpt_choice', type=str, default='epoch20')
-parser.add_argument('--preprocess_type', type=str, default='count', choices=['count', 'ordered_count', 'dense'])
 parser.add_argument('--seed', type=str, default='valid', choices=['train', 'valid'])
 
 args = parser.parse_args()
-
-
 sample_strategy = args.sample_strategy
 ckpt_task = args.ckpt_task
 seq_lenth = int(re.search(r'_l(\d+)', ckpt_task).group(1))
+block_num = int(re.search(r'_block(\d+)', ckpt_task).group(1))
 interval = int(re.search(r'_interval(\d+)', ckpt_task).group(1))
-gen_files = args.gen_files
+
+
 gen_length = args.gen_length
 ckpt_choice = args.ckpt_choice
 task = args.task
 state = args.state
 reset_thresh = args.reset_thresh
 # state = not ckpt_task.endswith('stateless')
-preprocess_type = args.preprocess_type
 os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu_id
 embedding_dim = 128 
-rnn_units = 512
+rnn_units = 128
 data_type = args.data_type
 seed = args.seed
-include_pos = False if 'no_pos' in ckpt_task else True
+include_pos = False 
 pretrained_emb = True if 'transE' in ckpt_task else False
-block_num = int(re.search(r'_block(\d+)', ckpt_task).group(1)) if '_block' in ckpt_task else 2
+
+all_file_num = 57 if "Fip35" in data_type else 100
+train_shape = int(0.8 * all_file_num)
+valid_shape = all_file_num - train_shape
+gen_files= 20
+# gen_files = valid_shape
 
 physical_devices = tf.config.experimental.list_physical_devices('GPU')
 assert len(physical_devices) > 0, "Not enough GPU hardware devices available"
@@ -72,20 +74,22 @@ valid = valid0.reshape(-1, interval).T.flatten()
 
 vocab_size=len(np.unique(train))
 pos_size = 100
-
-if pretrained_emb:
-    emb = np.load('/home/wzengad/projects/OpenKE/checkpoint/entity2vec.npy')
-    emb = tf.convert_to_tensor(emb, dtype=tf.float32)
-else:
-    emb = None
+emb = None
 
 # gen_files as batchsize
-if task == 'lstm':
-    model = LSTM(vocab_size, embedding_dim, gen_files, rnn_units, state, seq_lenth)
-elif task == 'trans_gpt':
-    model = trans_gpt(vocab_size, pos_size, embedding_dim, gen_files, seq_lenth, 
-                     num_layers=block_num, inference=True)
-    
+if task =='share_emb':
+    model = LSTM_share_emb(vocab_size, pos_size, embedding_dim, gen_files , rnn_units, state, return_sequences=False)
+elif task =='lstm':
+    model = LSTM(vocab_size, pos_size, embedding_dim, gen_files , rnn_units, state, seq_lenth, return_sequences=False)
+elif task == 'bi_lstm':
+    model = bi_LSTM(vocab_size, pos_size, embedding_dim, gen_files , rnn_units, state, return_sequences=False)
+elif task == 'lstm_trans':
+    model = LSTM_trans(vocab_size, pos_size, embedding_dim, gen_files, rnn_units, state, return_sequences=False)
+elif task =='transformer':
+    model = transformer_decoder(vocab_size, pos_size, embedding_dim, gen_files)
+elif task =='trans_gpt':
+    model = trans_gpt(vocab_size, pos_size, embedding_dim, gen_files, seq_lenth, num_layers=block_num ,inference=True)
+
 if ckpt_choice == 'best_loss':
     model.load_weights(checkpoint_dir + 'minTestLoss')
 elif 'epoch' in ckpt_choice:
@@ -96,17 +100,14 @@ if include_pos:
 else:
     save_name = f'no_gen_pos_prediction_'
 
-# vdata_ite=iter(vdataset)
-# initialize gen_input, text_generated as seqs from test dataset
 if seed == 'valid':
-    gen_input = valid.reshape(20,-1)[:gen_files, :seq_lenth]
+    # gen_input = valid.reshape(valid_shape,-1)[:gen_files, :seq_lenth]
+    gen_input = valid.reshape(gen_files,-1)[:gen_files, :seq_lenth]
 elif seed == 'train':
-    gen_input = train.reshape(80,-1)[:gen_files, :seq_lenth]
-# np.random.shuffle(gen_input)
+    gen_input = train.reshape(train_shape,-1)[:gen_files, :seq_lenth]
 
 gen_pos = tf.map_fn(cal_pos, gen_input)
 gen_trans = tf.map_fn(cal_trans, gen_input)
-# gen_input, gen_pos, gen_transition = vdata_ite.get_next()[0], vdata_ite.get_next()[2], vdata_ite.get_next()[3]  
 text_generated = gen_input
 
 if sample_strategy == 'category':
@@ -119,12 +120,14 @@ elif sample_strategy == 'top_k':
     sampler = top_k_sampler  
 
 for i in trange(gen_length):
-    # predictions = model(gen_input, gen_pos, gen_transition, include_pose=include_pos, include_trans=False, training=False)
-    
-    predictions = model(gen_input, gen_pos, gen_trans, include_pose=include_pos, training=False)
-    predicted_id = sampler(predictions[:,-1,:], 1)
+    predictions = model(gen_input, gen_pos, gen_trans, None, emb, include_pose=include_pos, training=False)
+    if 'trans' in task:
+        predictions = predictions[:,-1,:]
+
+    predicted_id = sampler(predictions, 1)
     # reshape predicted_id. The first dimension is consistent with num of gen_files
     predicted_id = tf.reshape(predicted_id, [gen_files,1])
+
     gen_input = tf.concat([gen_input[:,1:], predicted_id], axis=1)
     gen_pos = tf.map_fn(cal_pos, gen_input)
     gen_trans = tf.map_fn(cal_trans, gen_input)

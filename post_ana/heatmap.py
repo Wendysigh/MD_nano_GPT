@@ -26,9 +26,9 @@ def load_xvg(path):
 
 for i in range(0,100):
     if i<10:
-        url = f'/home/wzengad/projects/MD_code/data/phi_psi_raw/ala2-0.1ps-0{i}.xvg'
+        url = f'./data/phi_psi_raw/ala2-0.1ps-0{i}.xvg'
     else:
-        url = f'/home/wzengad/projects/MD_code/data/phi_psi_raw/ala2-0.1ps-{i}.xvg'
+        url = f'./data/phi_psi_raw/ala2-0.1ps-{i}.xvg'
     # data = np.loadtxt(url,comments=["@", '#'],unpack=True)
     (_phi, _psi) = load_xvg(url)
 
@@ -75,25 +75,53 @@ data2=pd.DataFrame(data)
 # fig.savefig('hist.png')
 # ax.clear()
 
+
+
 import matplotlib.style as style 
 import matplotlib
 import matplotlib.pyplot as plt
-style.available
-style.use('seaborn-paper') #sets the size of the charts
-# style.use('ggplot')
-matplotlib.rcParams['font.family'] = "serif"
-yticklabels = [180, 90, 0, -90]
-xticklabels = [-180, -90, 0, 90]
 
-fig = plt.figure()
-ax = fig.add_subplot(111)
-ax.set_yticks([0,50,100,150])
-ax.set_yticklabels(yticklabels, rotation=90)
-ax.set_xticks([0,50,100,150])
-ax.set_xticklabels(xticklabels,)
+plt.style.use('seaborn-v0_8-paper')
+matplotlib.rcParams.update({
+    'font.family': 'sans-serif',
+    'font.sans-serif': ['DejaVu Sans', 'Helvetica', 'Liberation Sans'],  # Fallback fonts
+    'font.size': 13,
+    'axes.labelsize': 14,
+    'axes.titlesize': 16,
+    'xtick.labelsize': 13,
+    'ytick.labelsize': 13
+})
 
-im = ax.imshow(data[::-1,:], cmap='YlGn')
-plt.colorbar(im)
-# plt.title("This is a title")
-plt.savefig('ala_heat.pdf', format='pdf', dpi=600, pad_inches = 0.05)
+# Define labels and ticks using π (only 3 ticks)
+yticklabels = ['-π', '0', 'π']
+xticklabels = ['-π', '0', 'π']
+yticks = [0, 100, 200]
+xticks = [0, 100, 200]
 
+# Create figure with specific size
+fig, ax = plt.subplots(figsize=(8, 6))
+
+# Plot heatmap
+im = ax.imshow(data[::-1,:], cmap='YlOrRd', aspect='equal')
+
+# Configure axes
+ax.set_yticks(yticks)
+ax.set_yticklabels(yticklabels, rotation=0)
+ax.set_xticks(xticks)
+ax.set_xticklabels(xticklabels)
+
+# Add labels
+ax.set_xlabel('ψ (radians)', labelpad=13)
+ax.set_ylabel('φ (radians)', labelpad=13)
+
+# Add colorbar with label and fewer ticks
+cbar = plt.colorbar(im, ax=ax, ticks=[data.min(), data.min() + (data.max()-data.min())/3, 
+                                     data.min() + 2*(data.max()-data.min())/3, data.max()],
+                    fraction=0.046, pad=0.04)  # Make colorbar bigger
+cbar.ax.tick_params(labelsize=14)  # Increased colorbar tick label size
+cbar.ax.set_yticklabels([f'{int(x)}' for x in cbar.get_ticks()])  # Format ticks as integers
+
+# Adjust layout and save
+plt.tight_layout()
+plt.savefig('./results/ala_heat.pdf', format='pdf', dpi=600, bbox_inches='tight')
+plt.close()

@@ -9,8 +9,8 @@ import json
 import pandas as pd
 import argparse
 import shutil
-from model_util.utils import *
-from model_util.models import *
+from models.utils import *
+from models.lstm import *
 np.random.seed(7)
 tf.random.set_seed(7)
 

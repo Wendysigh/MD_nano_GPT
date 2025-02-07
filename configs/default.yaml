@@ -1,0 +1,22 @@
+# Model configurations
+model:
+  type: "trans_gpt"  # or "lstm"
+  embedding_dim: 128
+  num_layers: 2
+  rnn_units: 512
+
+# Training configurations
+training:
+  batch_size: 64
+  learning_rate: 0.0005
+  epochs: 300
+  save_interval: 10
+  gpu_id: 0
+
+# Data configurations
+data:
+  type: "Fip35_macro5"  # choices: ["RMSD", "MacroAssignment", "Fip35_micro100", "Fip35_macro5"]
+  sequence_length: 100
+  interval: 1
+  batch_type: "window"  # choices: ["window", "sparse"]
+  window_shift: 50

@@ -1,48 +1,49 @@
-# README #
+# Nano-GPT for Molecular Dynamics
 
-### What is this repository for? ###
+A deep learning framework using Nano-GPT architecture for learning molecular dynamics and generating trajectories on alanine dipeptide and simulated 4-state systems. The model can effectively capture molecular state transitions and generate realistic molecular dynamics trajectories.
 
-Nano-GPT for learning molecular dynamics and generating trajectories on alanine depeptide and simulated 4-state. 
-Code are tested on Linux and Python3.6 with Pytorch on 2080Ti GPU.
+## Features
 
+- Implementation of Nano-GPT for molecular dynamics trajectory generation
+- Support for multiple systems:
+  - Alanine dipeptide system
+  - 4-state simulated system
+  - FiP35 protein system
+- Post-analysis tools for:
+  - Mean First Passage Time (MFPT)
+  - Implied Timescales (ITS)
+  - Causal tracing
+  - Free energy landscape analysis
 
-### Env Requirement ###
-```
-conda create -n tf_env python=3.9
+## Requirements
+
+The code has been tested on Linux with Python 3.6+ and PyTorch on NVIDIA 2080Ti GPU. To set up the environment:
+
+```bash
+# Create and activate conda environment
+conda create -n tf_env python=3.6
 conda activate tf_env
+
+# Install CUDA dependencies
 conda install conda-forge::cudatoolkit=11.2.2
 conda install conda-forge::cudnn=8.1.0.77
+
+# Install required packages
 pip install tensorflow-gpu==2.10.0
 pip install keras-nlp==0.3.1 --no-deps
 pip install "numpy<2"
-<!-- python -c "import tensorflow as tf; print(tf.config.list_physical_devices('GPU'))" -->
-mkdir -p $CONDA_PREFIX/etc/conda/activate.d
-nano $CONDA_PREFIX/etc/conda/activate.d/env_vars.sh
-<!-- # add below line  -->
-<!-- #!/bin/bash
-export LD_LIBRARY_PATH=$CONDA_PREFIX/lib:$LD_LIBRARY_PATH -->
 
-git clone https://github.com/msmbuilder/msmbuilder2022.git # old msmbuilder only works for python<3.6>
+# Install MSMBuilder (required for analysis)
+git clone https://github.com/msmbuilder/msmbuilder2022.git
 python -m pip install ./msmbuilder2022
 ```
-### Basic usage ###
 
-It contains the following files and subfolders:
+## Usage
 
-4states/ : for experiments on 4-state simulated system.
+1. Training:
 
-alanine/ : for experiments on alanine system.
+python scripts/train.py --config configs/default.yaml
 
-post_ana/: for post analysis like MFPT, ITS and causal tracing.
+2. Generation:
 
-data/ : dataset
-
-code running:
-cd $HOME/MD_code/
-
-
-# using nano-GPT on alanine
-python -u alanine/train_gpt.py --data_type='RMSD' --gpu_id=5 --interval=1 --trans_block=2
-
-# post-analysis
-python -u post_ana/Fig_causal_detection.py --data_type='RMSD' 
+python scripts/generate.py --checkpoint path/to/checkpoint

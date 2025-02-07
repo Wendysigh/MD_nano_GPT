@@ -1,22 +1,38 @@
-# Ignore Python cache files
+# Python
 __pycache__/
 *.py[cod]
+*.so
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
 
-# Ignore log files
-*.log
-
-# Ignore environment files
-.env
-venv/
-
-# Ignore system files
-.DS_Store
-Thumbs.db
-
-# Ignore build artifacts
+# Data and results
 data/
 logs/
 checkpoint/
-slurm_logs/
 results/
-msmbuilder2022/
+slurm_logs/
+train/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db

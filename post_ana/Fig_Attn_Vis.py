@@ -4,8 +4,8 @@ tf.compat.v1.enable_eager_execution()
 import os
 import re
 import numpy as np
-from model_util.utils import *
-from model_util.models import *
+from models.utils import *
+from models.lstm import *
 from tqdm import tqdm, trange
 
 import argparse

@@ -10,8 +10,8 @@ import argparse
 import shutil
 import sys
 sys.path.append('/home/wzengad/projects/MD_code/LSTM')
-from model_util.utils import *
-from model_util.models import *
+from models.utils import *
+from models.lstm import *
 np.random.seed(7)
 tf.random.set_seed(7)
 

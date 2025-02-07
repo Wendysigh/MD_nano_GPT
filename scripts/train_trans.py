@@ -12,8 +12,9 @@ import pandas as pd
 import argparse
 import shutil
 
-from model_util.utils import *
-from model_util.models import *
+from utils.utils import *
+from models.lstm import *
+from models.transformer import *
 
 np.random.seed(7)
 tf.random.set_seed(7)
