@@ -26,6 +26,7 @@ checkpoint/
 results/
 slurm_logs/
 train/
+msmbuilder2022/
 
 # IDE
 .idea/

@@ -42,8 +42,13 @@ python -m pip install ./msmbuilder2022
 
 1. Training:
 
-python scripts/train.py --config configs/default.yaml
+```bash
+python -u train_trans.py --batch_type=window --interval=5 --trans_block=2 --gpu_id=1 --data_type='Fip35_macro5'
+```
+
 
 2. Generation:
 
-python scripts/generate.py --checkpoint path/to/checkpoint
+```bash
+python -u generation.py --gpu_id=1 --data_type='Fip35_micro100' --ckpt_choice=epoch20 --ckpt_task=Label0.0_window50_interval1_lr0.0005_emb_dim128_l100_block2_scheduled
+```
