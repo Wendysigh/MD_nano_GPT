@@ -14,6 +14,6 @@ git branch -M main
 git push -u origin main
 
 
-git rm -r --cached train/
-git commit -m "Remove train/ directory from git tracking"
+git rm -r --cached generate/
+git commit -m "Remove directory from git tracking"
 git push origin main

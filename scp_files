@@ -1,0 +1,10 @@
+data/
+logs/
+checkpoint/
+results/
+train/
+msmbuilder2022/
+fig_data/
+generate/
+post_ana/
+bash_scripts/

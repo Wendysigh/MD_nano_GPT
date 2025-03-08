@@ -30,6 +30,7 @@ msmbuilder2022/
 fig_data/
 generate/
 post_ana/
+bash_scripts/
 
 # IDE
 .idea/
